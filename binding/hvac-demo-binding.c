@@ -31,7 +31,7 @@
 #include <math.h>
 #include <json-c/json.h>
 
-#define AFB_BINDING_VERSION 2
+#define AFB_BINDING_VERSION 3
 #include <afb/afb-binding.h>
 
 #define RED "/sys/class/leds/blinkm-3-9-red/brightness"
@@ -40,7 +40,7 @@
 
 #define CAN_DEV "vcan0"
 
-static struct afb_event event;
+static afb_event_t event;
 
 /*****************************************************************************************/
 /*****************************************************************************************/
@@ -329,10 +329,10 @@ static int temp_write_led()
 /*
  * @brief Get temperature of left toggle in HVAC system
  *
- * @param struct afb_req : an afb request structure
+ * @param afb_req_t : pointer to a afb request structure
  *
  */
-static void temp_left_zone_led(struct afb_req request)
+static void temp_left_zone_led(afb_req_t request)
 {
 	int i = 5, rc, x, changed;
 	double d;
@@ -401,10 +401,10 @@ static void temp_left_zone_led(struct afb_req request)
 /*
  * @brief Get temperature of right toggle in HVAC system
  *
- * @param struct afb_req : an afb request structure
+ * @param afb_req_t : pointer to a afb request structure
  *
  */
-static void temp_right_zone_led(struct afb_req request)
+static void temp_right_zone_led(afb_req_t request)
 {
 	int i = 6, rc, x, changed;
 	double d;
@@ -527,10 +527,10 @@ static int write_can()
 /*
  * @brief Get fan speed HVAC system
  *
- * @param struct afb_req : an afb request structure
+ * @param afb_req_t : pointer to a afb request structure
  *
  */
-static void get_fanspeed(struct afb_req request)
+static void get_fanspeed(afb_req_t request)
 {
 	json_object *ret_json;
 	uint8_t fanspeed = read_fanspeed();
@@ -544,10 +544,10 @@ static void get_fanspeed(struct afb_req request)
 /*
  * @brief Read Consign right zone temperature for HVAC system
  *
- * @param struct afb_req : an afb request structure
+ * @param afb_req_t : pointer to a afb request structure
  *
  */
-static void get_temp_right_zone(struct afb_req request)
+static void get_temp_right_zone(afb_req_t request)
 {
 	json_object *ret_json;
 	uint8_t temp = read_temp_right_zone();
@@ -561,10 +561,10 @@ static void get_temp_right_zone(struct afb_req request)
 /*
  * @brief Read Consign left zone temperature for HVAC system
  *
- * @param struct afb_req : an afb request structure
+ * @param afb_req_t : pointer to a afb request structure
  *
  */
-static void get_temp_left_zone(struct afb_req request)
+static void get_temp_left_zone(afb_req_t request)
 {
 	json_object *ret_json;
 	uint8_t temp = read_temp_left_zone();
@@ -578,12 +578,12 @@ static void get_temp_left_zone(struct afb_req request)
 /*
  * @brief Read all values
  *
- * @param struct afb_req : an afb request structure
+ * @param afb_req_t : pointer to a afb request structure
  *
  */
-static void get(struct afb_req request)
+static void get(afb_req_t request)
 {
-	AFB_DEBUG("Getting all values");
+	AFB_REQ_DEBUG(request, "Getting all values");
 	json_object *ret_json;
 
 	ret_json = json_object_new_object();
@@ -597,10 +597,10 @@ static void get(struct afb_req request)
 /*
  * @brief Set a component value using a json object retrieved from request
  *
- * @param struct afb_req : an afb request structure
+ * @param afb_req_t : pointer to a afb request structure
  *
  */
-static void set(struct afb_req request)
+static void set(afb_req_t request)
 {
 	int i, rc, x, changed;
 	double d;
@@ -686,32 +686,32 @@ static void set(struct afb_req request)
 	}
 }
 
-int bindingServicePreInit(struct afb_service service)
+static int bindingServicePreInit(afb_api_t api)
 {
 	return open_can_dev();
 }
 
-int bindingServiceInit(struct afb_service service)
+static int bindingServiceInit(afb_api_t api)
 {
 	event = afb_daemon_make_event("language");
 	if(parse_config() != 0)
 		AFB_WARNING("Default values are being used!\n");
 	if(afb_daemon_require_api("identity", 1))
 		return -1;
-	return afb_service_call_sync("identity", "subscribe", NULL, NULL);
+	return afb_api_call_sync(api, "identity", "subscribe", json_object_new_object(), NULL, NULL, NULL);
 }
 
-void onEvent(const char *event_name, struct json_object *object)
+static void onEvent(afb_api_t api, const char *event_name, struct json_object *object)
 {
 	json_object *language = json_object_new_object();
 	json_object *id_evt_name, *current_identity;
 
-	AFB_NOTICE("Event '%s' received: %s", event_name,
+	AFB_API_NOTICE(api, "Event '%s' received: %s", event_name,
 		json_object_to_json_string_ext(object, JSON_C_TO_STRING_PRETTY));
 
 	if (json_object_object_get_ex(object, "eventName", &id_evt_name) &&
 	  !strcmp(json_object_get_string(id_evt_name), "login") &&
-	  !afb_service_call_sync("identity", "get", NULL, &current_identity)) {
+	  !afb_api_call_sync(api, "identity", "get", json_object_new_object(), &current_identity, NULL, NULL)) {
 		json_object *response;
 		if (! json_object_object_get_ex(current_identity, "response", &response) || ! json_object_object_get_ex(response, "graphPreferredLanguage", &language)) {
 			language = json_object_new_string("en_US");
@@ -721,7 +721,7 @@ void onEvent(const char *event_name, struct json_object *object)
 }
 
 // TODO: Have to change session management flag to AFB_SESSION_CHECK to use token auth
-static const struct afb_verb_v2 _afb_verbs_v2_hvac[]= {
+static const afb_verb_t hvac_verbs[]= {
 	{
 		.verb = "get_temp_left_zone",
 		.callback = get_temp_left_zone,
@@ -768,13 +768,11 @@ static const struct afb_verb_v2 _afb_verbs_v2_hvac[]= {
 	{ }
 };
 
-const struct afb_binding_v2 afbBindingV2 = {
+const afb_binding_t afbBindingV3 = {
     .api = "hvac",
-    .specification = NULL,
-    .info = "HVAC service",
-    .verbs = _afb_verbs_v2_hvac,
+    .info = "HVAC service API",
+    .verbs = hvac_verbs,
     .preinit = bindingServicePreInit,
     .init = bindingServiceInit,
     .onevent = onEvent,
-    .noconcurrency = 0
 };
