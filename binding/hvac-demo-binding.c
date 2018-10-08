@@ -730,60 +730,47 @@ static const struct afb_verb_v2 _afb_verbs_v2_hvac[]= {
 	{
 		.verb = "get_temp_left_zone",
 		.callback = get_temp_left_zone,
-		.auth = NULL,
 		.info = "Get the left zone temperature",
-		.session = AFB_SESSION_NONE_V2
+		.session = AFB_SESSION_NONE,
 	},
 	{
 		.verb = "get_temp_right_zone",
 		.callback = get_temp_right_zone,
-		.auth = NULL,
 		.info = "Get the right zone temperature",
-		.session = AFB_SESSION_NONE_V2
+		.session = AFB_SESSION_NONE,
 	},
 	{
 		.verb = "get_fanspeed",
 		.callback = get_fanspeed,
-		.auth = NULL,
 		.info = "Read fan speed",
-		.session = AFB_SESSION_NONE_V2
+		.session = AFB_SESSION_NONE,
 	},
 	{
 		.verb = "get",
 		.callback = get,
-		.auth = NULL,
 		.info = "Read all speed",
-		.session = AFB_SESSION_NONE_V2
+		.session = AFB_SESSION_NONE,
 	},
 	{
 		.verb = "set",
 		.callback = set,
-		.auth = NULL,
 		.info = "Set a HVAC component value",
-		.session = AFB_SESSION_NONE_V2
+		.session = AFB_SESSION_NONE,
 	},
 	{
 		.verb = "temp_left_zone_led",
 		.callback = temp_left_zone_led,
-		.auth = NULL,
 		.info = "Turn on LED on left temperature zone",
-		.session = AFB_SESSION_NONE_V2
+		.session = AFB_SESSION_NONE,
 	},
 	{
 		.verb = "temp_right_zone_led",
 		.callback = temp_right_zone_led,
-		.auth = NULL,
 		.info = "Turn on LED on left temperature zone",
-		.session = AFB_SESSION_NONE_V2
+		.session = AFB_SESSION_NONE,
 
 	},
-	{
-		.verb = NULL,
-		.callback = NULL,
-		.auth = NULL,
-		.info = NULL,
-		.session = 0
-	}
+	{ }
 };
 
 const struct afb_binding_v2 afbBindingV2 = {
