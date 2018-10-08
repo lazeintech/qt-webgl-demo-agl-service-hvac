@@ -40,10 +40,6 @@
 
 #define CAN_DEV "vcan0"
 
-#ifndef NULL
-#define NULL 0
-#endif
-
 static const struct afb_binding_interface *interface;
 static struct afb_event event;
 
