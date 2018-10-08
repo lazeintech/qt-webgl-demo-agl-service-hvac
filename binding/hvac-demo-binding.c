@@ -40,7 +40,6 @@
 
 #define CAN_DEV "vcan0"
 
-static const struct afb_binding_interface *interface;
 static struct afb_event event;
 
 /*****************************************************************************************/
@@ -282,7 +281,7 @@ static int parse_config()
 static int temp_write_led()
 {
 
-	int rc = -1, red_value, green_value, blue_value;
+	int red_value, green_value, blue_value;
 	int right_temp;
 	int left_temp;
 
@@ -704,7 +703,7 @@ int bindingServiceInit(struct afb_service service)
 
 void onEvent(const char *event_name, struct json_object *object)
 {
-	json_object *args, *language = json_object_new_object();
+	json_object *language = json_object_new_object();
 	json_object *id_evt_name, *current_identity;
 
 	AFB_NOTICE("Event '%s' received: %s", event_name,
