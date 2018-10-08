@@ -135,9 +135,9 @@ struct can_handler {
 };
 
 struct led_paths {
-	char *red;
-	char *green;
-	char *blue;
+	const char *red;
+	const char *green;
+	const char *blue;
 }led_paths_values = {
 	.red = RED,
 	.green = GREEN,
