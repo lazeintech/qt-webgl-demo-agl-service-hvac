@@ -139,6 +139,12 @@ struct led_paths {
 	.blue = BLUE
 };
 
+struct can_device {
+	const char *name;
+} can_dev = {
+	.name = CAN_DEV
+};
+
 static struct can_handler can_handler = { .socket = -1, .simulation = false, .send_msg = "SENDING CAN FRAME"};
 
 static int open_can_dev_helper()
@@ -156,7 +162,7 @@ static int open_can_dev_helper()
 	else
 	{
 		// Attempts to open a socket to CAN bus
-		strcpy(ifr.ifr_name, CAN_DEV);
+		strcpy(ifr.ifr_name, can_dev.name);
 		if(ioctl(can_handler.socket, SIOCGIFINDEX, &ifr) < 0)
 		{
 			AFB_ERROR("ioctl failed");
@@ -186,7 +192,7 @@ static int open_can_dev()
 	int rc = retry(open_can_dev_helper);
 	if(rc < 0)
 	{
-		AFB_ERROR("Open of interface %s failed. Falling back to simulation mode", CAN_DEV);
+		AFB_ERROR("Open of interface %s failed. Falling back to simulation mode", can_dev.name);
 		can_handler.socket = 0;
 		can_handler.simulation = true;
 		can_handler.send_msg = "FAKE CAN FRAME";
@@ -245,6 +251,7 @@ static uint8_t read_fanspeed()
 static int parse_config()
 {
 	struct json_object *ledtemp = NULL;
+	struct json_object *candevice = NULL;
 	struct json_object *jobj = json_object_from_file("/etc/hvac.json");
 
 	// Check if .json file has been parsed as a json_object
@@ -268,6 +275,11 @@ static int parse_config()
 		} else if (strcmp(key, "blue") == 0) {
 			led_paths_values.blue = json_object_get_string(value);
 		}
+	}
+
+	// Extract can device
+	json_object_object_get_ex(jobj, "can_device", &candevice); {
+		can_dev.name = json_object_get_string(candevice);
 	}
 
 	// return 0 if all succeeded
