@@ -40,7 +40,7 @@
 
 #define CAN_DEV "vcan0"
 
-static afb_event_t event;
+static afb_event_t event, sync_event;
 
 /*****************************************************************************************/
 /*****************************************************************************************/
@@ -400,6 +400,16 @@ static void temp_left_zone_led(afb_req_t request)
 		hvac_values[i].value = values[i]; // update structure at line 102
 		AFB_WARNING("WRITE_LED: value: %d", hvac_values[i].value);
 		rc = temp_write_led();
+
+		////
+		json_object *ret_json;
+		uint8_t temp = read_temp_left_zone();
+
+		ret_json = json_object_new_object();
+		json_object_object_add(ret_json, "LeftTemperature", json_object_new_int(temp));
+		afb_event_broadcast(sync_event, ret_json);
+		////
+
 		if (rc >= 0)
 			afb_req_success(request, NULL, NULL);
 		else if (retry(temp_write_led)) {
@@ -470,7 +480,17 @@ static void temp_right_zone_led(afb_req_t request)
 
 	if (changed) {
 		hvac_values[i].value = values[i]; // update structure at line 102
-		AFB_WARNING("WRITE_LED: value: %d", hvac_values[i].value);
+		AFB_WARNING("TNT WRITE_LED: value: %d", hvac_values[i].value);
+
+		////
+		json_object *ret_json;
+		uint8_t temp = read_temp_right_zone();
+
+		ret_json = json_object_new_object();
+		json_object_object_add(ret_json, "RightTemperature", json_object_new_int(temp));
+		afb_event_broadcast(sync_event, ret_json);
+		////
+
 		rc = temp_write_led();
 		if (rc >= 0)
 			afb_req_success(request, NULL, NULL);
@@ -680,6 +700,16 @@ static void set(afb_req_t request)
 			i--;
 			hvac_values[i].value = values[i];
 		}
+
+		////
+		json_object *ret_json;
+		uint8_t speed = read_fanspeed();
+
+		ret_json = json_object_new_object();
+		json_object_object_add(ret_json, "FanSpeed", json_object_new_int(speed));
+		afb_event_broadcast(sync_event, ret_json);
+		////
+
 		rc = write_can();
 		if (rc >= 0)
 			afb_req_success(request, NULL, NULL);
@@ -706,6 +736,7 @@ static int bindingServicePreInit(afb_api_t api)
 static int bindingServiceInit(afb_api_t api)
 {
 	event = afb_daemon_make_event("language");
+	sync_event = afb_daemon_make_event("sync");
 	if(parse_config() != 0)
 		AFB_WARNING("Default values are being used!\n");
 	if(afb_daemon_require_api("identity", 1))
